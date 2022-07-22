@@ -19,6 +19,7 @@ class BM_OfficialApi(models.Model):
             'pass': False,
             'error': False,
             'message': '',
+            'debug': '',
             'data': {}
         }
 
@@ -35,7 +36,8 @@ class BM_OfficialApi(models.Model):
         self.init_service()
 
         if not official.reliable_base:  # Si no fue consultado
-            service_response = self.api_service.ws_valida_base_confiable(official)
+            service_response = self.api_service.ws_valida_base_confiable(
+                official)
 
             # Primero verifico que la API haya respondido bien
             if service_response['Erroresnegocio']:
@@ -55,12 +57,23 @@ class BM_OfficialApi(models.Model):
             else:
                 self.result['error'] = True
                 self.result['message'].append(service_response['Mensaje'])
+            # DEBUG
+            self.result['debug'] = service_response['debug']
         else:
             # Volver a verificar esta parte
             if official.reject_reason:
                 if 'Persona No Encontrada' in official.reject_reason:
                     official.reject_reason = None
             self.result['ok'] = True
+            self.result['message'] = 'El funcionario ya se encontró'
+            # DEBUG
+            self.result['debug'] = 'No se ejecuto la API: %(reason)s - %(msg)s' % ({
+                'reason': '"{}" = {}'.format(
+                    self._fields['reliable_base'].string, official.reliable_base
+                ),
+                'msg': self.result['message']
+            })
+
         return self.result
 
     def ws_cliente_posee_cuenta(self, official):
@@ -88,19 +101,33 @@ class BM_OfficialApi(models.Model):
                     official.account_name = service_response['Ttnom']
 
                 if not official.branch_id and service_response['Sucursal']:
-                    _branch = official.branch_id.search([('code', 'in', [service_response['Sucursal']])])
+                    _branch = official.branch_id.search(
+                        [('code', 'in', [service_response['Sucursal']])])
                     # Si NO encuentro el ID en la tabla, lo creo y le asigno un nombre
                     if not _branch:
                         _branch = official.branch_id.create({
                             'name': 'sucursal_{}'.format(service_response['Sucursal']),
                             'code': service_response['Sucursal']
-                            })
+                        })
                     official.branch_id = _branch
                 # NO se usa: service_response['Cttfir']
                 # NO se usa: service_response['Observacion']
                 self.result['ok'] = True
+            # DEBUG
+            self.result['debug'] = service_response['debug']
         else:
             self.result['pass'] = True
+            self.result['message'] = 'El funcionario ya posee cuenta'
+            # DEBUG
+            self.result['debug'] = 'No se ejecuto la API: %(reason)s - %(msg)s' % ({
+                'reason': '"{}" = {} and "{}" = {} and "{}" = {}'.format(
+                    self._fields['account_number'].string, official.account_number,
+                    self._fields['account_name'].string, official.account_name,
+                    self._fields['branch_id'].string, '({}) {}'.format(
+                        official.branch_id.code, official.branch_id.name)
+                ),
+                'msg': self.result['message']
+            })
 
         return self.result
 
@@ -129,6 +156,8 @@ class BM_OfficialApi(models.Model):
                 'account_registration': datetime.now()
             })
             self.result['ok'] = True
+        # DEBUG
+        self.result['debug'] = service_response['debug']
 
         return self.result
 
@@ -150,14 +179,17 @@ class BM_OfficialApi(models.Model):
         if 'Se Generó la Caja de Ahorro' in service_response['Mensaje']:
             self.result['ok'] = True
         elif service_response['Mensaje'] in ['Cuenta existente bajo el mismo contrato',
-                                           'Verificar el Limite Operativo de la Cuenta',
-                                           'La cuenta ya cuenta con una caja de ahorro en la sucursal',
-                                           'El Número de Subcuenta ya existe para el Producto.']:
+                                             'Verificar el Limite Operativo de la Cuenta',
+                                             'La cuenta ya cuenta con una caja de ahorro en la sucursal',
+                                             'El Número de Subcuenta ya existe para el Producto.']:
             self.result['pass'] = True
             self.result['message'] = service_response['Mensaje']
         else:
             self.result['error'] = True
             self.result['message'] = service_response['Mensaje']
+
+        # DEBUG
+        self.result['debug'] = service_response['debug']
 
         return self.result
 
@@ -177,14 +209,14 @@ class BM_OfficialApi(models.Model):
                 self.result['message'] = service_response['Erroresnegocio']
 
             # Encuentro el estado dentro del dict _ACCOUNT_STATUS
-            official_account_status = '999' # Estado sin información
+            official_account_status = '999'  # Estado sin información
             for status in official._ACCOUNT_STATUS:
                 if service_response['Scstat'] in status[0]:
                     official_account_status = status[0]
                     break
             official.sudo().write({
                 'account_status': official_account_status,
-                #'account_module': service_response['Scmod']  El modulo se obtiene por la empresa del funcionario
+                # 'account_module': service_response['Scmod']  El modulo se obtiene por la empresa del funcionario
             })
             # NO se usa service_response['Sccta']
             # NO se usa service_response['Scmda']
@@ -196,9 +228,19 @@ class BM_OfficialApi(models.Model):
             else:
                 self.result['error'] = True
                 self.result['message'] = 'No se obtuvo ningún estado'
+
+            # DEBUG
+            self.result['debug'] = service_response['debug']
         else:
             self.result['error'] = True
             self.result['message'] = 'El funcionario no posee cuenta'
+            # DEBUG
+            self.result['debug'] = 'No se ejecuto la API: %(reason)s - %(msg)s' % ({
+                'reason': '"{}" = {}'.format(
+                    self._fields['account_number'].string, official.account_number
+                ),
+                'msg': self.result['message']
+            })
 
         return self.result
 
@@ -223,6 +265,8 @@ class BM_OfficialApi(models.Model):
             self.result['error'] = True
             self.result['message'] = service_response['Mensaje']
 
+        # DEBUG
+        self.result['debug'] = service_response['debug']
         return self.result
 
     def ws_estado_td(self, official):
@@ -252,12 +296,9 @@ class BM_OfficialApi(models.Model):
         else:
             self.result['error'] = True
             self.result['message'] = 'Sin datos para la consulta'
-            
-        #if 'LA CUENTA ESTA BLOQUEADA' in service_response['Observacion']:
-        #    self.result['error'] = True
-        #    self.result['message'] = service_response['Mensaje']
-        #else:
-        #    self.result['ok'] = True
+
+        # DEBUG
+        self.result['debug'] = service_response['debug']
 
         return self.result
 
@@ -268,7 +309,8 @@ class BM_OfficialApi(models.Model):
         """
         self.init_service()
 
-        service_response = self.api_service.ws_control_cliente_payroll(official)
+        service_response = self.api_service.ws_control_cliente_payroll(
+            official)
 
         # Primero verifico que la API haya respondido bien
         if service_response['Erroresnegocio']:
@@ -283,6 +325,9 @@ class BM_OfficialApi(models.Model):
             "GxExiste": service_response['GxExiste']
         }
 
+        # DEBUG
+        self.result['debug'] = service_response['debug']
+
         return self.result
 
     def ws_consulta_cuenta_servicio(self, company_account):
@@ -292,7 +337,8 @@ class BM_OfficialApi(models.Model):
         """
         self.init_service()
 
-        service_response = self.api_service.ws_consulta_cuenta_servicio(company_account)
+        service_response = self.api_service.ws_consulta_cuenta_servicio(
+            company_account)
 
         # Primero verifico que la API haya respondido bien
         if service_response['Erroresnegocio']:
@@ -307,5 +353,8 @@ class BM_OfficialApi(models.Model):
             'DesContrato': service_response['DesContrato'],
             'Datos': service_response['Datos']
         }
+
+        # DEBUG
+        self.result['debug'] = service_response['debug']
 
         return self.result

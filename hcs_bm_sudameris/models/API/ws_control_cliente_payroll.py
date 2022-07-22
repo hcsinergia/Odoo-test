@@ -1,4 +1,3 @@
-from datetime import datetime
 import requests
 import json
 import logging
@@ -43,19 +42,21 @@ class ApiWsControlClientePayroll:
             "CtCCli": official.company_id.company_code
         })
         response = {
-            "FcUltCobro": datetime.now().strftime('%Y-%m-%d'),
-            "Ctfalt": "2019-07-30",
-            "ENTFCBAJA": "0000-00-00",
-            "GxExiste": "N",
-            "CodRetorno": "0",
+            "FcUltCobro": "0000-00-00",
+            "Ctfalt": "",
+            "ENTFCBAJA": "",
+            "GxExiste": "",
+            "CodRetorno": "",
             "Mensaje": "",
-            "Erroresnegocio": ""
+            "Erroresnegocio": "",
+            "debug": ""
         }
 
-        """ try:
+        try:
             request = requests.post(self.request_url, data=request_body, headers={
                 'Content-Type': 'application/json'}, verify=False, timeout=3)
             request = request.text
+            response['debug'] = request
             logger.info([self.service, request])
             request = json.loads(request)
 
@@ -76,9 +77,11 @@ class ApiWsControlClientePayroll:
 
         except Exception as e:
             exp_message = str(e)
-            if 'HTTPConnectionPool' in exp_message: # HTTPConnectionPool == Conection Timeout
+            if 'HTTPConnectionPool' in exp_message:  # HTTPConnectionPool == Conection Timeout
                 exp_message = '(HTTPConnectionPool): No se puede conectar al banco'
-            logger.error([self.service, 'Exception', exp_message], exc_info=True)
-            response["Erroresnegocio"] = exp_message """
+            logger.error([self.service, 'Exception',
+                         exp_message], exc_info=True)
+            response['debug'] = exp_message
+            response["Erroresnegocio"] = exp_message
 
         return response

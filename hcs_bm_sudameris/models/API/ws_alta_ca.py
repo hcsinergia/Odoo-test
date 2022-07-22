@@ -1,4 +1,6 @@
-import logging, requests, json
+import logging
+import requests
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -41,14 +43,16 @@ class ApiWsAltaCA:
         })
         response = {
             "PCvNom": "",
-            "CodRetorno": "0",
-            "Mensaje": "Se Generó la Caja de Ahorro",
-            "Erroresnegocio": ""
+            "CodRetorno": "",
+            "Mensaje": "",
+            "Erroresnegocio": "",
+            "debug": ""
         }
-        """ try:
+        try:
             request = requests.post(self.request_url, data=request_body, headers={
                 'Content-Type': 'application/json'}, verify=False, timeout=3)
             request = request.text
+            response['debug'] = request
             logger.info([self.service, request])
             request = json.loads(request)
 
@@ -63,9 +67,11 @@ class ApiWsAltaCA:
 
         except Exception as e:
             exp_message = str(e)
-            if 'HTTPConnectionPool' in exp_message: # HTTPConnectionPool == Conection Timeout
+            if 'HTTPConnectionPool' in exp_message:  # HTTPConnectionPool == Conection Timeout
                 exp_message = '(HTTPConnectionPool): No se puede conectar al banco'
-            logger.error([self.service, 'Exception', exp_message], exc_info=True)
-            response["Erroresnegocio"] = exp_message """
+            logger.error([self.service, 'Exception',
+                         exp_message], exc_info=True)
+            response['debug'] = exp_message
+            response["Erroresnegocio"] = exp_message
 
         return response

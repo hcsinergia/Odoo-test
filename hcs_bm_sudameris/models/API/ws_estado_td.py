@@ -65,19 +65,21 @@ class ApiWsEstadoTD:
             }
         })
         response = {
-            "CUENTA": "3604451",
-            "MODULO": "21",
-            "MONEDA": "6900",
-            "SUCURSAL": "10",
-            "ESTADO": "1",
-            "PIN": "A",
-            "Erroresnegocio": ""
+            "CUENTA": "",
+            "MODULO": "",
+            "MONEDA": "",
+            "SUCURSAL": "",
+            "ESTADO": "",
+            "PIN": "",
+            "Erroresnegocio": "",
+            "debug": ""
         }
-        """ try:
+        try:
             request = requests.post(self.request_url, data=request_body, headers={
                 'Content-Type': 'application/json'}, verify=False, timeout=3)
             request = request.text
-            logger.info([self.service, request])
+            response['debug'] = request
+            logger.info([self.service, response['debug']])
             request = json.loads(request)
 
             for BTErrorNegocio in request['Erroresnegocio']['BTErrorNegocio']:
@@ -112,9 +114,11 @@ class ApiWsEstadoTD:
 
         except Exception as e:
             exp_message = str(e)
-            if 'HTTPConnectionPool' in exp_message: # HTTPConnectionPool == Conection Timeout
+            if 'HTTPConnectionPool' in exp_message:  # HTTPConnectionPool == Conection Timeout
                 exp_message = '(HTTPConnectionPool): No se puede conectar al banco'
-            logger.error([self.service, 'Exception', exp_message], exc_info=True)
-            response["Erroresnegocio"] = exp_message """
+            logger.error([self.service, 'Exception',
+                         exp_message], exc_info=True)
+            response['debug'] = exp_message
+            response["Erroresnegocio"] = exp_message
 
         return response

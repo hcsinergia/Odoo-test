@@ -7,11 +7,19 @@
             <field name="model">bm.official.wizard</field>
             <field name="arch" type="xml">
                 <form>
+                    <field name="debugapibantotal" invisible="1" />
                     <sheet>
                         <group col="2" colspan="4">
                             <field name="message" nolabel="1" />
                         </group>
                     </sheet>
+                    <notebook>
+                        <page string="Debug API Bantotal" attrs="{'invisible': [('debugapibantotal', '=', False)]}">
+                            <group>
+                                <field name="debug_trace" nolabel="1" />
+                            </group>
+                        </page>
+                    </notebook>
                     <footer>
                         <button string="Cerrar" class="oe_link" special="cancel" />
                     </footer>
@@ -26,7 +34,7 @@
             <field name="target">new</field>
         </record>
         <!-- END Wizard Funcionario -->
-    
+
         <!-- Wizard Funcionario Rechazar CAM -->
         <record id="bm_official_wizard_rejectcam_view_form" model="ir.ui.view">
             <field name="name">bm.official.wizard.rejectcam.form</field>

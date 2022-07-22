@@ -43,32 +43,20 @@ class ApiWsConsultaCuentaServicio:
             "Cuenta": cuenta,
         })
         response = {
-            "Mensaje": "TRUE",
-            "NroContrato": "1234567",
-            "DesContrato": "Emprea TEST",
+            "Mensaje": "",
+            "NroContrato": "",
+            "DesContrato": "",
             "Canales": "",
-            "Datos": {
-                "sBTCuenta_Lista": [{
-                    "Servicio": {
-                        "sBTCuenta.Lista.Servicio": [
-                            {
-                                "Codigo": "101"
-                            }
-                        ]
-                    },
-                    "Sucursal": "10",
-                    "Moneda": "6900",
-                    "Cuenta": "1234567",
-                    "Modulo": "20"
-                }]
-            },
-            "Erroresnegocio": ""
+            "Datos": {},
+            "Erroresnegocio": "",
+            "debug": ""
         }
 
-        """ try:
+        try:
             request = requests.post(self.request_url, data=request_body, headers={
                 'Content-Type': 'application/json'}, verify=False, timeout=3)
             request = request.text
+            response['debug'] = request
             logger.info([self.service, request])
             request = json.loads(request)
 
@@ -80,14 +68,18 @@ class ApiWsConsultaCuentaServicio:
                     response["NroContrato"] = request["NroContrato"]
                 if 'DesContrato' in request:
                     response["DesContrato"] = request["DesContrato"]
+                if 'Canales' in request:
+                    response["Canales"] = request["Canales"]
                 response["Mensaje"] = request["Mensaje"]
                 response["Datos"] = request["Datos"]
 
         except Exception as e:
             exp_message = str(e)
-            if 'HTTPConnectionPool' in exp_message: # HTTPConnectionPool == Conection Timeout
+            if 'HTTPConnectionPool' in exp_message:  # HTTPConnectionPool == Conection Timeout
                 exp_message = '(HTTPConnectionPool): No se puede conectar al banco'
-            logger.error([self.service, 'Exception', exp_message], exc_info=True)
-            response["Erroresnegocio"] = exp_message """
+            logger.error([self.service, 'Exception',
+                         exp_message], exc_info=True)
+            response['debug'] = exp_message
+            response["Erroresnegocio"] = exp_message
 
         return response

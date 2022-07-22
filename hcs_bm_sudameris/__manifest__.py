@@ -14,9 +14,9 @@
     """,
     'author': "HC Sinergia",
     'website': "http://www.hcsinergia.com",
-    #'sequence': 99,
+    # 'sequence': 99,
     # any module necessary for this one to work correctly
-    'depends': ['base', 'web', 'contacts', 'report_xlsx'],
+    'depends': ['base', 'web', 'contacts', 'report_xlsx', 'password_security'],
     # always loaded
     'data': [
         'security/security.xml',
@@ -39,7 +39,9 @@
         'views/bm_job.xml',
         'views/bm_department.xml',
         'views/bm_views.xml',
+        'views/res_users.xml',
         'data/bm_data_branch.xml',
+        'data/bm_data_ir_cron.xml',
         'data/bm_data_mail_channel.xml',
         'data/bm_data_config.xml',
         'data/bm_data_product.xml',

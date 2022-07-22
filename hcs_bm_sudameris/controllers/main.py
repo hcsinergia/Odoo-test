@@ -2,6 +2,8 @@
 from odoo import http
 from odoo.http import request
 from odoo.addons.web.controllers.main import Session
+import requests
+import json
 
 import logging
 _logger = logging.getLogger(__name__)
@@ -182,8 +184,10 @@ class BM_OfficialSalary_Main(http.Controller):
         result = {
             'success': False,
             'id': None,
-            'companies': None
+            'companies': None,
+            'password': ''
         }
+
         if request.jsonrequest:
             try:
                 # Si existe el usuario, lo creo
@@ -222,9 +226,11 @@ class BM_OfficialSalary_Main(http.Controller):
                 _logger.info(['bm_check_user_login', {
                              'user_companies': user_companies}])
 
+                # Fix password_policy
+                result['password'] = self.generate_password_policy(user_info['company_ids'][0])
                 # Sobre escribo la información de las empresas al usuario
                 request.env['res.users'].browse(user_info['id']).sudo().write({
-                    'password': kwargs['loginUser']['subjectId'],
+                    'password': result['password'],
                     'company_ids': user_info['company_ids'],
                     'company_id': user_info['company_ids'][0]
                 })
@@ -235,13 +241,50 @@ class BM_OfficialSalary_Main(http.Controller):
             except:
                 return result
 
+    def generate_password_policy(self, company_id):
+        import string
+        import random
+
+        # Password to return
+        password = ''        
+
+        # Set the min lower chars
+        for i in range(company_id.password_lower):
+            password += random.choice(string.ascii_lowercase)
+
+        # Set the min upper chars
+        for i in range(company_id.password_upper):
+            password += random.choice(string.ascii_uppercase)
+
+        # Set the min numeric chars
+        for i in range(company_id.password_numeric):
+            password += random.choice(string.digits)
+
+        # Set the min special chars
+        for i in range(company_id.password_special):
+            password += random.choice("!@#$%^&*()")
+            #password += random.choice(string.punctuation)
+
+        _logger.info(['generate_password_policy: Ready', password])
+        # If need more security, complete password with lowercase
+        while (len(password) < company_id.password_length):
+            _logger.info(['generate_password_policy', 'Añadiendo caracter'])
+            password += random.choice(string.ascii_lowercase)
+
+        ## shuffling the resultant password and rejoin
+        password = list(password)
+        random.shuffle(password)
+        password = "".join(password)
+        _logger.info(['generate_password_policy: OK', password])
+        return password
+
     # Obtener información de un usuario
     @http.route('/bm_write_session_data', type="json", auth='public')
-    def bm_write_session_data(self, **kwargs):
+    def bm_write_session_data(self, *args, **kwargs):
         if request.jsonrequest:
             for user in request.env['res.users'].sudo().search([('id', '=', kwargs['user_id'])]):
                 user.sudo().write({
-                    'password': kwargs['externalId'],
+                    'password': kwargs['password'],
                     'bm_api_key': kwargs['ApiKey'],
                     'bm_access_token': kwargs['AccessToken'],
                 })
@@ -252,8 +295,6 @@ class BM_SessionLogout(Session):
 
     @http.route('/web/session/logout', type='http', auth="none", website=True, multilang=False, sitemap=False)
     def bm_logout(self):
-        import requests
-        import json
         baseUrl = 'https://dev.sudameris.com.py/api-ext/michi-auth-sudameris'
         authRequestUrlUser = baseUrl + '/auth/session'
         for user in request.env['res.users'].sudo().search([('id', '=', request._context['uid'])]):

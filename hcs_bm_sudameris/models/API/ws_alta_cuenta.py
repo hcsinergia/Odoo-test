@@ -1,4 +1,6 @@
-import logging, requests, json
+import logging
+import requests
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -85,18 +87,20 @@ class ApiWsAltaCuenta:
             "SubSegm": official.sub_segmentation
         })
         response = {
-            "CodEjct": "0",
-            "CtNro": "1234567",
-            "CtNom": official.name.upper(),
-            "CodRetorno": "0",
-            "Mensaje": "Se realizó el alta de la cuenta :    1234567",
-            "Erroresnegocio":""
+            "CodEjct": "",
+            "CtNro": "",
+            "CtNom": "",
+            "CodRetorno": "",
+            "Mensaje": "",
+            "Erroresnegocio": "",
+            "debug": ""
         }
 
-        """ try:
+        try:
             request = requests.post(self.request_url, data=request_body, headers={
                 'Content-Type': 'application/json'}, verify=False, timeout=3)
             request = request.text
+            response['debug'] = request
             logger.info([self.service, request])
             request = json.loads(request)
 
@@ -104,6 +108,8 @@ class ApiWsAltaCuenta:
                 response["Erroresnegocio"] = BTErrorNegocio['Descripcion']
 
             if not response['Erroresnegocio']:
+                if 'CodEjct' in request:
+                    response["CodEjct"] = request["CodEjct"]
                 if 'CtNro' in request:
                     response["CtNro"] = request["CtNro"]
                 if 'CtNom' in request:
@@ -113,9 +119,11 @@ class ApiWsAltaCuenta:
 
         except Exception as e:
             exp_message = str(e)
-            if 'HTTPConnectionPool' in exp_message: # HTTPConnectionPool == Conection Timeout
+            if 'HTTPConnectionPool' in exp_message:  # HTTPConnectionPool == Conection Timeout
                 exp_message = '(HTTPConnectionPool): No se puede conectar al banco'
-            logger.error([self.service, 'Exception', exp_message], exc_info=True)
-            response["Erroresnegocio"] = exp_message """
+            logger.error([self.service, 'Exception',
+                         exp_message], exc_info=True)
+            response['debug'] = exp_message
+            response["Erroresnegocio"] = exp_message
 
         return response
