@@ -365,7 +365,7 @@ class BM_Official(models.Model):
     # endregion
 
     # region POPUPS
-    def show_message(self, title, message, debug_trace=False, *args):
+    def show_message(self, title, message, debug_trace=[], *args):
         return {
             'name': title,
             'type': 'ir.actions.act_window',
@@ -738,7 +738,7 @@ class BM_Official(models.Model):
             result['message'] += 'Estado de Tarjeta de Débito:\n{}\n\n'.format(
                 '\n'.join(verif_result['etd']['error']))
 
-        return self.show_message('Alta de cuentas', result['message'])
+        return self.show_message('Alta de cuentas', result['message'], result['debug'])
     # endregion
 
     # region ACTIONS
@@ -785,7 +785,7 @@ class BM_Official(models.Model):
             # Si está en borrador, pasa a estar en proceso de alta (Centro Payroll)
             if official.state in ['draft']:
                 # Verifico la cuenta del funcionario
-                account_result = self.action_verificar_cuenta()
+                account_result = self.action_verificar_cuenta(True)
                 result['debug'] = account_result['debug']
                 official.state = 'check_payroll'
 
@@ -810,7 +810,7 @@ class BM_Official(models.Model):
         # Si obtengo info de la cuenta, la muestro
         if account_result:
             result['message'] += '{}\n'.format(
-                account_result['context']['default_message'])
+                account_result['message'])
 
         if len(result['errors']['not_id']) > 0:
             result['message'] += 'NO poseen "Cédula de identidad":\n{}\n\n'.format(
@@ -824,13 +824,14 @@ class BM_Official(models.Model):
             result['message'] += 'Ya poseen numero de cuenta:\n{}\n\n'.format(
                 '\n'.join(result['errors']['has_account']))
 
-        return self.show_message('Remitir al Banco', result['message'])
+        return self.show_message('Remitir al Banco', result['message'], result['debug'])
 
     def action_create_officials_salary(self):
         """# Action: Crear movimiento de salario"""
         result = {
             'message': '',
             'count_ok': 0,
+            'debug': [],
             'errors': {
                 'not_ready': [],
                 'gross_salary': [],
@@ -913,13 +914,14 @@ class BM_Official(models.Model):
             result['message'] += 'Licencia mayor a 35 dias:\n{}\n\n'.format(
                 '\n'.join(result['errors']['has_departured']))
 
-        return self.show_message('Movimiento de salarios', result['message'])
+        return self.show_message('Movimiento de salarios', result['message'], result['debug'])
 
     def action_refer_cam(self):
         """# Action: Remitir al banco (Centro de Altas Masivas)"""
         result = {
             'message': '',
             'count_ok': 0,
+            'debug': [],
             'errors': {
                 'not_ready': [],
                 'not_id_auth': [],
@@ -965,7 +967,7 @@ class BM_Official(models.Model):
             result['message'] += 'No están en proceso de alta o ya se encuentra remitidos al CAM:\n{}\n\n'.format(
                 '\n'.join(result['errors']['not_ready']))
 
-        return self.show_message('Remitir al CAM', result['message'])
+        return self.show_message('Remitir al CAM', result['message'], result['debug'])
 
     def action_aprove(self):
         """# Action: Aprobar funcionario"""
@@ -981,7 +983,7 @@ class BM_Official(models.Model):
         for official in self.env['bm.official'].browse(self._context.get('active_ids')) or self:
             if official.state in ['check_cam', 'pending']:
                 # Actualizo los datos de la cuenta
-                service = self.action_verificar_cuenta()
+                service = self.action_verificar_cuenta(True)
                 result['debug'] = service['debug']
 
                 # Desactivo la opcion reliable_base porque no se necesita para verificar
