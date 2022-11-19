@@ -14,6 +14,7 @@ const clientVersion = "1.0.0";
 const authVersion = "1.0.0";
 const XRshkMichiApiKey =
   "c709c1b4fcfaeca543bf@8a86c850-0f32-40a7-9b7f-3dced6fb2459@da1a416a9b050c04f7c0";
+const callbackErrorMsg = 'Ocurrió un error inesperado. Favor contactar con nuestro Call Center llamando al teléfono <a href="tel:+595214166000">416-6000</a> o escribanos al correo <a href="mailto:sac@sudameris.com.py">sac@sudameris.com.py</a>.'
 
 // definiciones para controlar las cookies
 const deviceIdCookieName = "X-RshkMichi-deviceId";
@@ -39,7 +40,7 @@ function modalCover(show) {
 
 // funcion utilidad mensaje de error
 function errorMessage(message) {
-  document.getElementById("api-alert").innerText = message;
+  document.getElementById("api-alert").innerHTML = message;
   document.getElementById("api-alert").style.display = "";
   if (message === null)
     document.getElementById("api-alert").style.display = "none";
@@ -238,8 +239,7 @@ function michiAuthRequestDeviceId(callback) {
         callback_args.error = jsonData.message + " (" + jsonData.code + ")";
       }
     } else {
-      callback_args.error =
-        "No se pudo establecer contacto con el servicio. Verifique su conexión a la red";
+      callback_args.error = callbackErrorMsg;
     }
     if (callback_args.error) console.error(callback_args);
     callback(callback_args);
@@ -301,8 +301,7 @@ function michiAuthOperatorLogin(operator, callback) {
         callback_args.error = jsonData.message + " (" + jsonData.code + ")";
       }
     } else {
-      callback_args.error =
-        "No se pudo establecer contacto con el servicio. Verifique su conexión a la red";
+      callback_args.error = callbackErrorMsg;
     }
     if (callback_args.error) console.error(callback_args);
     callback(callback_args);
@@ -407,8 +406,7 @@ function michiAuthUserLogin(userValue, password, callback) {
         callback_args.error = jsonData.message + " (" + jsonData.code + ")";
       }
     } else {
-      callback_args.error =
-        "No se pudo establecer contacto con el servicio. Verifique su conexión a la red";
+      callback_args.error = callbackErrorMsg;
     }
     if (callback_args.error) console.error(callback_args);
     callback(callback_args);
@@ -444,9 +442,7 @@ window.onload = function () {
         .getElementsByClassName("container py-5")[0]
         .classList.add("container-show");
       if (!deviceId)
-        errorMessage(
-          "No se pudo establecer contacto con el servicio. Verifique su conexión a la red"
-        );
+        errorMessage(callbackErrorMsg);
       else enableLoginButton();
     });
   else {

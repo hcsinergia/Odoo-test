@@ -332,5 +332,15 @@
         </div>
       </xpath>
     </template>
+
+    <template id="web_layout_inherited_hcs_bm_sudameris" inherit_id="web.layout">
+      <xpath expr="//title" position="replace">
+        <title>Cash Sudameris</title>
+      </xpath>
+      <xpath expr="//link[@type='image/x-icon']" position="replace">
+        <link rel="shortcut icon" href="/hcs_bm_sudameris/static/src/img/favicon.ico" type="image/x-icon" />
+      </xpath>
+    </template>
+
   </data>
 </odoo>
